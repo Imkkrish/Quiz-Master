@@ -1,0 +1,84 @@
+body {
+background-color: #f8f9fa;
+}
+
+.container {
+margin-top: 50px;
+}
+
+.list-group-item.active {
+background-color: #0d6efd;
+border-color: #0d6efd;
+}
+
+.btn-primary {
+background-color: #0d6efd;
+border-color: #0d6efd;
+}
+
+.btn-primary:hover {
+background-color: #0b5ed7;
+border-color: #0a58ca;
+}
+
+
+.navbar {
+min-height: 2rem;
+max-height:5rem ;
+}
+.navbar-brand {
+font-size: 1.25rem;
+padding: 0;
+}
+.navbar-nav .nav-link {
+padding-top: 0.5rem;
+padding-bottom: 0.5rem;
+}
+.card {
+border: none;
+border-radius: 0.5rem;
+box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+}
+.card-header {
+background-color: #343a40;
+color: #fff;
+font-size: 1.25rem;
+text-align: center;
+padding: 0.75rem 1.25rem;
+border-bottom: 1px solid rgba(255,255,255,0.125);
+}
+.card-footer {
+background-color: #f8f9fa;
+border-top: 1px solid #dee2e6;
+text-align: right;
+}
+.table thead th {
+border-bottom: 2px solid #dee2e6;
+}
+.login-body {
+background: #f0f2f5;
+display: flex;
+align-items: center;
+justify-content: center;
+height: 100vh;
+margin: 0;
+}
+.login-card {
+width: 100%;
+max-width: 400px;
+padding: 2rem;
+border-radius: 1rem;
+background: #ffffff;
+box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+.login-card h2 {
+font-weight: 600;
+margin-bottom: 1.5rem;
+}
+.login-card a {
+text-decoration: none;
+color: #007bff;
+}
+.login-card a:hover {
+text-decoration: underline;
+}
