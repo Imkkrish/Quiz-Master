@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Questions List - Quiz Master Admin</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+</head>
+<body>
+  <div class="container mt-5">
+    <h2>Questions for Quiz: {{ quiz.name }}</h2>
+    {% if questions %}
+    <table class="table table-bordered">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Question Statement</th>
+          <th>Options</th>
+          <th>Correct Answer</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for question in questions %}
+        <tr>
+          <td>{{ loop.index }}</td>
+          <td>{{ question.question_statement }}</td>
+          <td>
+            {% set opts = question.options.split(',') %}
+            {% for opt in opts %}
+              <div>{{ opt }}</div>
+            {% endfor %}
+          </td>
+          <td>{{ question.correct_answer }}</td>
+          <td>
+            <a href="{{ url_for('question.edit_question', question_id=question.id) }}" class="btn btn-sm btn-warning">Edit</a>
+            <form action="{{ url_for('question.delete_question', question_id=question.id) }}" method="POST" style="display:inline-block;">
+              <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure you want to delete this question?');">Delete</button>
+            </form>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+      <p>No questions added yet.</p>
+    {% endif %}
+    <a href="{{ url_for('question.add_question', quiz_code=quiz.code) }}" class="btn btn-primary">Add New Question</a>
+    <a href="{{ url_for('admin.list_quizzes') }}" class="btn btn-secondary">Back to Quizzes</a>
+  </div>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

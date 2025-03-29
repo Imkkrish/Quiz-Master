@@ -1,4 +1,3 @@
-# models/chapter.py
 from models.database import db
 
 class Chapter(db.Model):

@@ -8,8 +8,9 @@ class User(db.Model):
     password_hash = db.Column(db.String(255), nullable=False)
     full_name = db.Column(db.String(120), nullable=False)
     qualification = db.Column(db.String(120))
-    dob = db.Column(db.String(10))
-    
+    dob = db.Column(db.String(10))  # Alternatively, use db.Date for actual date objects
+    is_active = db.Column(db.Boolean, default=True)  # New column: active by default
+
     scores = db.relationship('Score', backref='user', lazy=True)
 
     def set_password(self, password):

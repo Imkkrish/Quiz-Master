@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Edit Question - Quiz Master Admin</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+</head>
+<body>
+  <div class="container mt-5">
+    <h2>Edit Question</h2>
+    <form action="{{ url_for('question.edit_question', question_id=question.id) }}" method="POST">
+      <div class="mb-3">
+        <label for="question_statement" class="form-label">Question Statement</label>
+        <textarea class="form-control" name="question_statement" id="question_statement" rows="3" required>{{ question.question_statement }}</textarea>
+      </div>
+      <div class="mb-3">
+        <label class="form-label">Options</label>
+        <div class="input-group mb-2">
+          <span class="input-group-text">
+            <input class="form-check-input mt-0" type="radio" name="correct_answer" id="correct_answer_A" {% if options[0] == question.correct_answer %}checked{% endif %} required>
+          </span>
+          <input type="text" class="form-control" placeholder="Option A" name="option_a" id="option_a" value="{{ options[0] }}" oninput="updateRadioValue('option_a', 'correct_answer_A')" required>
+        </div>
+        <div class="input-group mb-2">
+          <span class="input-group-text">
+            <input class="form-check-input mt-0" type="radio" name="correct_answer" id="correct_answer_B" {% if options[1] == question.correct_answer %}checked{% endif %} required>
+          </span>
+          <input type="text" class="form-control" placeholder="Option B" name="option_b" id="option_b" value="{{ options[1] }}" oninput="updateRadioValue('option_b', 'correct_answer_B')" required>
+        </div>
+        <div class="input-group mb-2">
+          <span class="input-group-text">
+            <input class="form-check-input mt-0" type="radio" name="correct_answer" id="correct_answer_C" {% if options[2] == question.correct_answer %}checked{% endif %}>
+          </span>
+          <input type="text" class="form-control" placeholder="Option C" name="option_c" id="option_c" value="{{ options[2] }}" oninput="updateRadioValue('option_c', 'correct_answer_C')">
+        </div>
+        <div class="input-group mb-2">
+          <span class="input-group-text">
+            <input class="form-check-input mt-0" type="radio" name="correct_answer" id="correct_answer_D" {% if options[3] == question.correct_answer %}checked{% endif %}>
+          </span>
+          <input type="text" class="form-control" placeholder="Option D" name="option_d" id="option_d" value="{{ options[3] }}" oninput="updateRadioValue('option_d', 'correct_answer_D')">
+        </div>
+      </div>
+      <button type="submit" class="btn btn-primary">Update Question</button>
+    </form>
+    <br>
+    <a href="{{ url_for('question.list_questions', quiz_code=question.quiz_id) }}" class="btn btn-secondary">Back to Questions List</a>
+  </div>
+  
+  <script>
+    function updateRadioValue(optionInputId, radioId) {
+      document.getElementById(radioId).value = document.getElementById(optionInputId).value;
+    }
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

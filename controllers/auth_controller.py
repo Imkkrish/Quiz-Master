@@ -1,5 +1,5 @@
-# controllers/auth_controller.py
 from flask import Blueprint, render_template, request, redirect, url_for, session, flash
+from flask_login import logout_user  # Import logout_user from flask_login
 from models.database import db
 from models.user import User
 
@@ -25,6 +25,7 @@ def register():
         flash('Registration successful. Please login.')
         return redirect(url_for('auth.login'))
     return render_template('register.html')
+
 @auth_bp.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
@@ -36,7 +37,7 @@ def login():
             session['user_id'] = user.id
             session['username'] = user.username
             if user.username == 'admin':
-                return redirect(url_for('quiz.admin_dashboard'))
+                return redirect(url_for('admin.dashboard'))
             return redirect(url_for('user.user_dashboard'))
         else:
             flash('Invalid username or password')

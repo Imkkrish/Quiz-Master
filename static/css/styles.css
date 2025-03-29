@@ -9,6 +9,7 @@ margin-top: 50px;
 .list-group-item.active {
 background-color: #0d6efd;
 border-color: #0d6efd;
+text-decoration: none;
 }
 
 .btn-primary {
@@ -21,19 +22,6 @@ background-color: #0b5ed7;
 border-color: #0a58ca;
 }
 
-
-.navbar {
-min-height: 2rem;
-max-height:5rem ;
-}
-.navbar-brand {
-font-size: 1.25rem;
-padding: 0;
-}
-.navbar-nav .nav-link {
-padding-top: 0.5rem;
-padding-bottom: 0.5rem;
-}
 .card {
 border: none;
 border-radius: 0.5rem;
@@ -81,4 +69,70 @@ color: #007bff;
 }
 .login-card a:hover {
 text-decoration: underline;
+}
+.navbar {
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+.navbar-brand {
+    font-weight: bold;
+    font-size: 1.8rem;
+}
+/* Sidebar */
+.sidebar {
+    background-color: #343a40;
+    min-height: 100vh;
+    padding: 20px;
+}
+.sidebar a {
+    color: #adb5bd;
+    text-decoration: none;
+    font-size: 1.1rem;
+    margin-bottom: 15px;
+    display: block;
+    padding: 10px;
+    border-radius: 5px;
+    transition: background-color 0.3s, color 0.3s;
+}
+.sidebar a:hover, .sidebar a.active {
+    color: #fff;
+    background-color: #495057;
+}
+/* Main Content */
+.content {
+    padding: 20px;
+}
+/* Dashboard Cards */
+.card {
+    border: none;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    margin-bottom: 30px;
+}
+.card-body {
+    padding: 20px;
+}
+.card-footer {
+    background-color: #f8f9fa;
+    border-top: 1px solid #e9ecef;
+    text-align: center;
+    padding: 10px;
+    border-bottom-left-radius: 10px;
+    border-bottom-right-radius: 10px;
+}
+.dashboard-card {
+    transition: transform 0.3s;
+}
+.dashboard-card:hover {
+    transform: translateY(-5px);
+}
+
+.chart-container {
+  margin: 20px auto;
+  max-width: 600px;
+}
+.summary-card {
+  padding: 15px;
+  border-radius: 10px;
+  text-align: center;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
 }

@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Add Subject - Quiz Master Admin</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+</head>
+<body>
+  <!-- Top Navbar -->
+  <nav class="navbar navbar-dark bg-dark">
+    <div class="container-fluid">
+      <a class="navbar-brand" href="#">Quiz Master Admin</a>
+      <!-- Offcanvas Toggle for Mobile -->
+      <button class="btn btn-outline-light d-md-none" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasSidebar">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+    </div>
+  </nav>
+
+  <!-- Offcanvas Sidebar for Mobile -->
+  <div class="offcanvas offcanvas-start" tabindex="-1" id="offcanvasSidebar">
+    <div class="offcanvas-header">
+      <h5 class="offcanvas-title">Menu</h5>
+      <button class="btn-close" data-bs-dismiss="offcanvas"></button>
+    </div>
+    <div class="offcanvas-body">
+      <nav class="nav flex-column">
+        <a href="/dashboard" class="nav-link">Dashboard</a>
+        <a href="/subjects" class="nav-link active">Subjects</a>
+        <a href="/chapters" class="nav-link">Chapters</a>
+        <a href="/quizzes" class="nav-link">Quizzes</a>
+        <a href="/manage_users" class="nav-link">Manage User</a>
+        <a href="/logout" class="nav-link">Logout</a>
+      </nav>
+    </div>
+  </div>
+
+  <div class="container-fluid">
+    <div class="row">
+      <!-- Sidebar for Desktop -->
+      <div class="col-md-3 d-none d-md-block sidebar">
+        <nav class="nav flex-column">
+          <a href="/dashboard" class="nav-link">Dashboard</a>
+          <a href="/subjects" class="nav-link active">Subjects</a>
+          <a href="/chapters" class="nav-link">Chapters</a>
+          <a href="/quizzes" class="nav-link">Quizzes</a>
+          <a href="/manage_users" class="nav-link">Manage User</a>
+          <a href="/logout" class="nav-link">Logout</a>
+        </nav>
+      </div>
+      <!-- Main Content -->
+      <div class="col-md-9 content">
+        <h1>Add Subject</h1>
+        <form method="POST">
+          <div class="mb-3">
+            <label for="subject_id" class="form-label">Subject ID</label>
+            <input type="text" class="form-control" name="subject_id" id="subject_id" placeholder="Enter subject ID" required>
+          </div>
+          <div class="mb-3">
+            <label for="name" class="form-label">Subject Name</label>
+            <input type="text" class="form-control" name="name" id="name" placeholder="Enter subject name" required>
+          </div>
+          <div class="mb-3">
+            <label for="description" class="form-label">Description</label>
+            <textarea class="form-control" name="description" id="description" placeholder="Enter description"></textarea>
+          </div>
+          <button type="submit" class="btn btn-primary">Add Subject</button>
+        </form>
+      </div>      
+    </div>
+  </div>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

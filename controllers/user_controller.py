@@ -4,113 +4,186 @@ from models.quiz import Quiz
 from models.score import Score
 from models.database import db
 from models.question import Question
-from models.user_response import UserResponse  # Ensure this model is defined and imported
+from models.user_response import UserResponse  # Ensure this model exists
+from models.user import User  # Import User to check active status
+from models.subject import Subject
+from models.chapter import Chapter
 
 user_bp = Blueprint('user', __name__)
+
 @user_bp.route('/user_dashboard', endpoint='user_dashboard')
 def user_dashboard():
-    if 'username' not in session:
+    if 'username' not in session or 'user_id' not in session:
         flash("You must be logged in to view this page", "warning")
         return redirect(url_for('auth.login'))
     
     user_id = session.get('user_id')
+    user = User.query.get(user_id)
+    if not user:
+        flash("User not found", "warning")
+        return redirect(url_for('auth.login'))
     
-    # Calculate actual statistics
-    total_score = db.session.query(func.sum(Score.score)).filter(Score.user_id == user_id).scalar() or 0
-    attempted_count = Score.query.filter(Score.user_id == user_id).count()
+    # If the user is blocked (is_active == 0), render the blocked account page.
+    if not user.is_active:
+        return render_template('blocked.html', user=user)
+    
+    # Otherwise, calculate performance metrics and render the dashboard.
+    total_score = db.session.query(func.sum(UserResponse.score)).filter(UserResponse.user_id == user_id).scalar() or 0
+    attempted_count = UserResponse.query.filter_by(user_id=user_id).count()
     total_quizzes = Quiz.query.count()
     
-    # Debug info
-    print(f"Debug - User ID: {user_id}")
-    print(f"Debug - Total Score: {total_score}")
-    print(f"Debug - Attempted Count: {attempted_count}")
-    print(f"Debug - Total Quizzes: {total_quizzes}")
-    
-    return render_template('user_dashboard.html', 
+    return render_template('dashboard/user_dashboard.html', 
                            total_score=total_score,
                            attempted_count=attempted_count,
                            total_quizzes=total_quizzes)
 
-@user_bp.route('/attempt_quiz/<string:quiz_code>', methods=['GET', 'POST'])
-def attempt_quiz(quiz_code):
-    quiz = Quiz.query.filter_by(code=quiz_code).first_or_404()
+@user_bp.route('/user_quizzes')
+def list_quiz_subjects():
+    if 'username' not in session:
+        flash("Please log in to attempt a quiz", "warning")
+        return redirect(url_for('auth.login'))
+    # Retrieve subjects that have at least one quiz.
+    subjects = Subject.query.join(Subject.chapters).join(Chapter.quizzes).distinct().all()
+    return render_template('users/quiz_subjects.html', subjects=subjects)
 
-    questions = sorted(quiz.questions, key=lambda q: q.id)
-    total_questions = len(questions)
-    current_index = request.args.get('q', default=0, type=int)
+# 2. For a given subject, list chapters that have quizzes.
+@user_bp.route('/user_quizzes/<subject_id>')
+def list_quiz_chapters(subject_id):
+    if 'username' not in session:
+        flash("Please log in to attempt a quiz", "warning")
+        return redirect(url_for('auth.login'))
+    
+    subject = Subject.query.get_or_404(subject_id)
+    # Retrieve chapters in the subject that have at least one quiz.
+    chapters = Chapter.query.filter(Chapter.subject_id == subject_id)\
+                .join(Chapter.quizzes).distinct().all()
+    
+    # Note: We don't disable a chapter here.
+    return render_template('users/quiz_chapters.html', subject=subject, chapters=chapters)
 
-    if current_index >= total_questions:
-        score_value = 0
-        user_id = session.get('user_id')
+# 3. For a selected chapter, list all quizzes.
+@user_bp.route('/user_quizzes/<subject_id>/<int:chapter_id>/quizzes')
+def list_quizzes_for_chapter(subject_id, chapter_id):
+    if 'username' not in session:
+        flash("Please log in to attempt a quiz", "warning")
+        return redirect(url_for('auth.login'))
+    
+    # Retrieve all quizzes for the chapter.
+    quizzes = Quiz.query.filter_by(chapter_id=chapter_id).all()
+    if not quizzes:
+        flash("No quizzes available in this chapter.", "warning")
+        return redirect(url_for('user.list_quiz_chapters', subject_id=subject_id))
+    
+    # Retrieve attempted quizzes for the user.
+    user_id = session.get('user_id')
+    attempted_responses = UserResponse.query.filter_by(user_id=user_id).all()
+    attempted_quizzes = {response.quiz_code for response in attempted_responses}
+    
+    return render_template('users/list_quizzes.html', 
+                           subject_id=subject_id, 
+                           chapter_id=chapter_id, 
+                           quizzes=quizzes, 
+                           attempted_quizzes=attempted_quizzes)
 
-        for question in questions:
-            response = UserResponse.query.filter_by(
-                user_id=user_id, quiz_id=quiz.code, question_id=question.id
-            ).first()
-            if response and response.answer.strip().upper() == question.correct_answer.strip().upper():
-                score_value += 1
-
-        existing_score = Score.query.filter_by(user_id=user_id, quiz_id=quiz.code).first()
-        if not existing_score:
-            new_score = Score(user_id=user_id, quiz_id=quiz.code, score=score_value)
-            db.session.add(new_score)
-            db.session.commit()
-            flash(f'Quiz completed! Your score: {score_value}', 'success')
-        else:
-            flash("You have already submitted this quiz.", "info")
-
-        return redirect(url_for('user.user_quizzes'))
-
-    current_question = questions[current_index]
-    existing_response = UserResponse.query.filter_by(
-        user_id=session.get('user_id'), quiz_id=quiz.code, question_id=current_question.id
-    ).first()
-
-    if request.method == 'POST':
-        user_answer = request.form.get('answer')
-
-        if not user_answer:
-            flash("Please select an answer before proceeding.", "warning")
-            return redirect(url_for('user.attempt_quiz', quiz_code=quiz.code, q=current_index))
-
-        if not existing_response:
-            new_response = UserResponse(
-                user_id=session.get('user_id'), quiz_id=quiz.code, question_id=current_question.id, answer=user_answer
-            )
-            db.session.add(new_response)
-            db.session.commit()
-        else:
-            flash("You have already answered this question. Moving to the next one.", "info")
-
-        return redirect(url_for('user.attempt_quiz', quiz_code=quiz.code, q=current_index + 1))
-
+# 4. For a selected quiz, display the quiz questions.
+@user_bp.route('/user_quizzes/<subject_id>/<int:chapter_id>/<quiz_code>')
+def attempt_quiz(subject_id, chapter_id, quiz_code):
+    if 'username' not in session:
+        flash("Please log in to attempt a quiz", "warning")
+        return redirect(url_for('auth.login'))
+    
+    quiz = Quiz.query.filter_by(code=quiz_code).first()
+    if not quiz:
+        flash("Quiz not found", "danger")
+        return redirect(url_for('user.list_quizzes_for_chapter', subject_id=subject_id, chapter_id=chapter_id))
+    
+    # Check if the user has already attempted this quiz.
+    user_id = session.get('user_id')
+    existing_response = UserResponse.query.filter_by(user_id=user_id, quiz_code=quiz.code).first()
     if existing_response:
-        flash("You have already answered this question. Moving to the next one.", "info")
-        return redirect(url_for('user.attempt_quiz', quiz_code=quiz.code, q=current_index + 1))
+        flash("You have already attempted this quiz.", "warning")
+        return redirect(url_for('user.list_quizzes_for_chapter', subject_id=subject_id, chapter_id=chapter_id))
+    
+    questions = Question.query.filter_by(quiz_id=quiz.code).all()
+    return render_template('users/attempt_quiz.html', quiz=quiz, questions=questions)
 
-    options = [opt.strip() for opt in current_question.options.split(',')]
-
-    return render_template('attempt_quiz.html', quiz=quiz, question=current_question, 
-                           q_index=current_index, total=total_questions, options=options)
+@user_bp.route('/submit_quiz/<quiz_code>', methods=['POST'])
+def submit_quiz(quiz_code):
+    if 'username' not in session or 'user_id' not in session:
+        flash("You must be logged in to submit a quiz", "warning")
+        return redirect(url_for('auth.login'))
+    
+    quiz = Quiz.query.filter_by(code=quiz_code).first()
+    if not quiz:
+        flash("Quiz not found", "danger")
+        return redirect(url_for('user.user_dashboard'))
+    
+    user = User.query.get(session.get('user_id'))
+    
+    existing_response = UserResponse.query.filter_by(user_id=user.id, quiz_code=quiz.code).first()
+    if existing_response:
+        flash("You have already submitted this quiz!", "warning")
+        return redirect(url_for('user.user_dashboard'))
+    
+    questions = Question.query.filter_by(quiz_id=quiz.code).all()
+    
+    correct_count = 0
+    for question in questions:
+        user_answer = request.form.get(f"q{question.id}")
+        if user_answer and user_answer.strip() == question.correct_answer.strip():
+            correct_count += 1
+    
+    total_questions = len(questions)
+    score = correct_count
+    percentage = (score / total_questions) * 100 if total_questions > 0 else 0
+    
+    new_response = UserResponse(
+        user_id=user.id,
+        username=user.username,
+        quiz_code=quiz.code,
+        quiz_name=quiz.name,
+        chapter_id=quiz.chapter_id,
+        subject_id=quiz.chapter.subject.id,
+        score=score,
+        total_questions=total_questions,
+        percentage=percentage
+    )
+    db.session.add(new_response)
+    db.session.commit()
+    
+    flash(f"Quiz submitted! Your score is {score} out of {total_questions} ({percentage:.2f}%).", "success")
+    return redirect(url_for('user.user_dashboard'))
 
 @user_bp.route('/view_scores')
 def view_scores():
-    if 'username' not in session:
+    if 'username' not in session or 'user_id' not in session:
+        flash("Please log in to view scores", "warning")
         return redirect(url_for('auth.login'))
-
+    
     user_id = session.get('user_id')
-    scores = Score.query.filter_by(user_id=user_id).all()
-
-    return render_template('view_scores.html', scores=scores)
-
-@user_bp.route('/user_quizzes')
-def user_quizzes():
-    if 'username' not in session:
-        return redirect(url_for('auth.login'))
-
-    user_id = session.get('user_id')
-    quizzes = Quiz.query.order_by(func.random()).all()
-
-    attempted = {score.quiz_id: score.score for score in Score.query.filter_by(user_id=user_id).all()}
-
-    return render_template('user_quizzes.html', quizzes=quizzes, attempted=attempted)
+    
+    subject_results = db.session.query(
+        UserResponse.subject_id,
+        func.sum(UserResponse.score).label('total_score'),
+        func.sum(UserResponse.total_questions).label('total_questions')
+    ).filter(UserResponse.user_id == user_id)\
+     .group_by(UserResponse.subject_id).all()
+    
+    chapter_results = db.session.query(
+        UserResponse.chapter_id,
+        func.sum(UserResponse.score).label('total_score'),
+        func.sum(UserResponse.total_questions).label('total_questions')
+    ).filter(UserResponse.user_id == user_id)\
+     .group_by(UserResponse.chapter_id).all()
+    
+    quiz_results = db.session.query(
+        UserResponse.quiz_code,
+        func.sum(UserResponse.score).label('total_score'),
+        func.sum(UserResponse.total_questions).label('total_questions')
+    ).filter(UserResponse.user_id == user_id)\
+     .group_by(UserResponse.quiz_code).all()
+    
+    return render_template('users/view_scores.html',
+                           subject_results=subject_results,
+                           chapter_results=chapter_results,
+                           quiz_results=quiz_results)
