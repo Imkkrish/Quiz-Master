@@ -9,88 +9,106 @@
   <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
   <style>
     .chart-container {
-        display: flex;
-      margin: 30px 0;
-      height:20rem;
+      display: flex;
+      flex-direction: column-reverse;
+      align-items: center;
+      border: 1px solid #ccc;
+      margin: 15px 0;
+      height: auto;
+      padding: 10px;
     }
   </style>
 </head>
-<body><nav class="navbar navbar-dark bg-dark">
-  <div class="container-fluid">
-    <a class="navbar-brand" href="#">Quiz Master</a>
-    <!-- Mobile Offcanvas Menu Button -->
-    <button class="btn btn-outline-light d-md-none" type="button" data-bs-toggle="offcanvas" data-bs-target="#userOffcanvas" aria-controls="userOffcanvas">
-      <span class="navbar-toggler-icon"></span>
-    </button>
-  </div>
-</nav>
+<body>
+  <nav class="navbar navbar-dark bg-dark">
+    <div class="container-fluid">
+      <a class="navbar-brand" href="#">Quiz Master</a>
+      <!-- Mobile Offcanvas Menu Button -->
+      <button class="btn btn-outline-light d-md-none" type="button" data-bs-toggle="offcanvas" data-bs-target="#userOffcanvas" aria-controls="userOffcanvas">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+    </div>
+  </nav>
 
-<!-- Offcanvas for Mobile Navigation -->
-<div class="offcanvas offcanvas-start" tabindex="-1" id="userOffcanvas" aria-labelledby="userOffcanvasLabel">
-  <div class="offcanvas-header">
-    <h5 class="offcanvas-title" id="userOffcanvasLabel">Menu</h5>
-    <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
-  </div>
-  <div class="offcanvas-body">
-    <nav class="nav flex-column">
-      <a href="{{ url_for('user.user_dashboard') }}" class="nav-link">Dashboard</a>
-      <a href="{{ url_for('user.list_quiz_subjects') }}" class="nav-link">Attempt Quiz</a>
-      <a href="/view_scores" class="nav-link active">View Scores</a>
-      <a href="logout" class="nav-link">Logout</a>
-    </nav>
-  </div>
-</div>
-
-<!-- Page Content -->
-<div class="container-fluid">
-  <div class="row">
-    <!-- Sidebar for Desktop -->
-    <aside class="col-md-3 sidebar d-none d-md-block">
+  <!-- Offcanvas for Mobile Navigation -->
+  <div class="offcanvas offcanvas-start" tabindex="-1" id="userOffcanvas" aria-labelledby="userOffcanvasLabel">
+    <div class="offcanvas-header">
+      <h5 class="offcanvas-title" id="userOffcanvasLabel">Menu</h5>
+      <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+    </div>
+    <div class="offcanvas-body">
       <nav class="nav flex-column">
         <a href="{{ url_for('user.user_dashboard') }}" class="nav-link">Dashboard</a>
         <a href="{{ url_for('user.list_quiz_subjects') }}" class="nav-link">Attempt Quiz</a>
         <a href="/view_scores" class="nav-link active">View Scores</a>
         <a href="logout" class="nav-link">Logout</a>
       </nav>
-    </aside>
-    
-    <!-- Main Content -->
-    <main class="col-md-9 ms-sm-auto col-lg-9 px-4">
+    </div>
+  </div>
+
+  <!-- Page Content -->
+  <div class="container-fluid">
+    <div class="row">
+      <!-- Sidebar for Desktop -->
+      <aside class="col-md-3 sidebar d-none d-md-block">
+        <nav class="nav flex-column">
+          <a href="{{ url_for('user.user_dashboard') }}" class="nav-link">Dashboard</a>
+          <a href="{{ url_for('user.list_quiz_subjects') }}" class="nav-link">Attempt Quiz</a>
+          <a href="/view_scores" class="nav-link active">View Scores</a>
+          <a href="logout" class="nav-link">Logout</a>
+        </nav>
+      </aside>
+      
+      <!-- Main Content -->
+      <main class="col-md-9 ms-sm-auto col-lg-9 px-4">
         <div class="container mt-5">
           <h2>Your Score Summary</h2>
           <p class="text-muted">Below is your performance overview based on subjects, chapters, and quizzes.</p>
           
-          <!-- Subject-wise Chart -->
-          <div class="chart-container">
-            <h4>Subject-wise Performance</h4>
-            <canvas id="subjectChart"></canvas>
+          <!-- Row for Subject and Quiz Charts -->
+          <div class="row">
+            <!-- Subject-wise Chart -->
+            <div class="col-md-6 col-12">
+              <div class="chart-container">
+                <h4>Subject-wise Performance</h4>
+                <canvas id="subjectChart"></canvas>
+              </div>
+            </div>
+            <!-- Quiz-wise Chart -->
+            <div class="col-md-6 col-12">
+              <div class="chart-container">
+                <h4>Quiz-wise Performance</h4>
+                <canvas id="quizChart"></canvas>
+              </div>
+            </div>
           </div>
           
-          <!-- Chapter-wise Chart -->
-          <div class="chart-container">
-            <h4>Chapter-wise Performance</h4>
-            <canvas id="chapterChart"></canvas>
-          </div>
-          
-          <!-- Quiz-wise Chart -->
-          <div class="chart-container">
-            <h4>Quiz-wise Performance</h4>
-            <canvas id="quizChart"></canvas>
+          <!-- Chapter-wise Performance Section -->
+          <div class="mt-5">
+            <h3>Chapter Performance</h3>
+            <div class="row">
+              {% for chapter in chapter_results %}
+              <div class="col-md-4 col-12">
+                <div class="chart-container">
+                  <h5>{{ chapter.chapter_name }} ({{ chapter.total_score }}/{{ chapter.total_questions }})</h5>
+                  <canvas id="chapterChart{{ loop.index }}"></canvas>
+                </div>
+              </div>
+              {% endfor %}
+            </div>
           </div>
           
           <a href="{{ url_for('user.user_dashboard') }}" class="btn btn-secondary mt-3 mb-3">Back to Dashboard</a>
         </div>
       </main>
+    </div>
+  </div>
+  
   <script>
-    // Subject-wise Data
+    // Subject-wise Data: using correct answers per subject for the pie chart.
     const subjectLabels = [
       {% for stat in subject_results %}
         "{{ stat.subject_id }}",
-      {% endfor %}
-    ];
-    const subjectTotalQuestions = [
-      {% for stat in subject_results %}
-        {{ stat.total_questions }},
       {% endfor %}
     ];
     const subjectCorrectAnswers = [
@@ -101,134 +119,96 @@
     
     const subjectData = {
       labels: subjectLabels,
-      datasets: [
-        {
-          label: 'Total Questions',
-          data: subjectTotalQuestions,
-          backgroundColor: 'rgba(54, 162, 235, 0.7)'
-        },
-        {
+      datasets: [{
           label: 'Correct Answers',
           data: subjectCorrectAnswers,
-          backgroundColor: 'rgba(75, 192, 192, 0.7)'
-        }
-      ]
+          backgroundColor: [
+            'rgba(54, 162, 235, 0.7)',
+            'rgba(75, 192, 192, 0.7)',
+            'rgba(255, 205, 86, 0.7)',
+            'rgba(255, 99, 132, 0.7)',
+            'rgba(153, 102, 255, 0.7)'
+          ]
+      }]
     };
     
     const subjectConfig = {
-      type: 'bar',
+      type: 'pie',
       data: subjectData,
-      options: {
-        responsive: true,
-        scales: {
-          y: {
-            beginAtZero: true,
-            ticks: { precision: 0 }
-          }
-        }
-      }
+      options: { responsive: true }
     };
     
     new Chart(document.getElementById('subjectChart'), subjectConfig);
     
-    // Chapter-wise Data
-    const chapterLabels = [
-      {% for stat in chapter_results %}
-        "Chapter {{ stat.chapter_id }}",
-      {% endfor %}
-    ];
-    const chapterTotalQuestions = [
-      {% for stat in chapter_results %}
-        {{ stat.total_questions }},
-      {% endfor %}
-    ];
-    const chapterCorrectAnswers = [
-      {% for stat in chapter_results %}
-        {{ stat.total_score }},
-      {% endfor %}
-    ];
-    
-    const chapterData = {
-      labels: chapterLabels,
-      datasets: [
+    // Quiz-wise Data: showing quiz code with score details.
+    // Latest 5 Quiz-wise Data: showing quiz code with score details for the latest 5 quizzes.
+    const latestQuizResults = [
+      {% for stat in quiz_results[:5] %}
         {
-          label: 'Total Questions',
-          data: chapterTotalQuestions,
-          backgroundColor: 'rgba(54, 162, 235, 0.7)'
+          quiz_code: "{{ stat.quiz_code }}",
+          total_score: {{ stat.total_score }},
+          total_questions: {{ stat.total_questions }}
         },
-        {
-          label: 'Correct Answers',
-          data: chapterCorrectAnswers,
-          backgroundColor: 'rgba(75, 192, 192, 0.7)'
-        }
-      ]
-    };
-    
-    const chapterConfig = {
-      type: 'bar',
-      data: chapterData,
-      options: {
-        responsive: true,
-        scales: {
-          y: {
-            beginAtZero: true,
-            ticks: { precision: 0 }
-          }
-        }
-      }
-    };
-    
-    new Chart(document.getElementById('chapterChart'), chapterConfig);
-    
-    // Quiz-wise Data
-    const quizLabels = [
-      {% for stat in quiz_results %}
-        "Quiz {{ stat.quiz_code }}",
       {% endfor %}
     ];
-    const quizTotalQuestions = [
-      {% for stat in quiz_results %}
-        {{ stat.total_questions }},
-      {% endfor %}
+
+    const quizLabels = latestQuizResults.map(stat =>
+      `Quiz ${stat.quiz_code} (${stat.total_score}/${stat.total_questions})`
+    );
+    const quizCorrectAnswers = latestQuizResults.map(stat => stat.total_score);
+
+    // Optional: generate a set of colors (using 5 fixed colors)
+    const quizColors = [
+      'rgba(54, 162, 235, 0.7)',
+      'rgba(75, 192, 192, 0.7)',
+      'rgba(255, 205, 86, 0.7)',
+      'rgba(255, 99, 132, 0.7)',
+      'rgba(153, 102, 255, 0.7)'
     ];
-    const quizCorrectAnswers = [
-      {% for stat in quiz_results %}
-        {{ stat.total_score }},
-      {% endfor %}
-    ];
-    
+
     const quizData = {
       labels: quizLabels,
-      datasets: [
-        {
-          label: 'Total Questions',
-          data: quizTotalQuestions,
-          backgroundColor: 'rgba(54, 162, 235, 0.7)'
-        },
-        {
+      datasets: [{
           label: 'Correct Answers',
           data: quizCorrectAnswers,
-          backgroundColor: 'rgba(75, 192, 192, 0.7)'
-        }
-      ]
+          backgroundColor: quizColors
+      }]
     };
-    
+
     const quizConfig = {
-      type: 'bar',
+      type: 'pie',
       data: quizData,
-      options: {
-        responsive: true,
-        scales: {
-          y: {
-            beginAtZero: true,
-            ticks: { precision: 0 }
-          }
-        }
-      }
+      options: { responsive: true }
     };
-    
+
     new Chart(document.getElementById('quizChart'), quizConfig);
+
+    // Chapter-wise Data: create a separate pie chart for each chapter.
+    {% for stat in chapter_results %}
+      const chapterData{{ loop.index }} = {
+        labels: ['Correct Answers', 'Wrong Answers'],
+        datasets: [{
+          data: [
+            {{ stat.total_score }},
+            {{ stat.total_questions }} - {{ stat.total_score }}
+          ],
+          backgroundColor: [
+            'rgba(75, 192, 192, 0.7)', // Correct
+            'rgba(255, 99, 132, 0.7)'  // Wrong
+          ]
+        }]
+      };
+      
+      const chapterConfig{{ loop.index }} = {
+        type: 'pie',
+        data: chapterData{{ loop.index }},
+        options: { responsive: true }
+      };
+      
+      new Chart(document.getElementById('chapterChart{{ loop.index }}'), chapterConfig{{ loop.index }});
+    {% endfor %}
   </script>
+  
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

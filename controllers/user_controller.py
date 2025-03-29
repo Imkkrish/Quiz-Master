@@ -8,6 +8,7 @@ from models.user_response import UserResponse  # Ensure this model exists
 from models.user import User  # Import User to check active status
 from models.subject import Subject
 from models.chapter import Chapter
+from datetime import date, datetime
 
 user_bp = Blueprint('user', __name__)
 
@@ -17,25 +18,39 @@ def user_dashboard():
         flash("You must be logged in to view this page", "warning")
         return redirect(url_for('auth.login'))
     
+    today = date.today()
     user_id = session.get('user_id')
     user = User.query.get(user_id)
     if not user:
         flash("User not found", "warning")
         return redirect(url_for('auth.login'))
     
-    # If the user is blocked (is_active == 0), render the blocked account page.
+    # If the user is blocked, render the blocked account page.
     if not user.is_active:
         return render_template('blocked.html', user=user)
     
-    # Otherwise, calculate performance metrics and render the dashboard.
+    # Performance metrics.
     total_score = db.session.query(func.sum(UserResponse.score)).filter(UserResponse.user_id == user_id).scalar() or 0
     attempted_count = UserResponse.query.filter_by(user_id=user_id).count()
     total_quizzes = Quiz.query.count()
     
+    # Retrieve ongoing live quizzes (scheduled for today).
+    live_quizzes = Quiz.query.filter(Quiz.date_of_quiz == today).all()
+    # Retrieve upcoming quizzes (scheduled for future dates).
+    upcoming_quizzes = Quiz.query.filter(Quiz.date_of_quiz > today).order_by(Quiz.date_of_quiz.asc()).all()
+    
+    # Get all quiz codes the user has already attempted.
+    attempted_responses = UserResponse.query.filter_by(user_id=user_id).all()
+    attempted_quizzes = {response.quiz_code for response in attempted_responses}
+    
     return render_template('dashboard/user_dashboard.html', 
                            total_score=total_score,
                            attempted_count=attempted_count,
-                           total_quizzes=total_quizzes)
+                           total_quizzes=total_quizzes,
+                           live_quizzes=live_quizzes,
+                           upcoming_quizzes=upcoming_quizzes,
+                           attempted_quizzes=attempted_quizzes,
+                           today=today)
 
 @user_bp.route('/user_quizzes')
 def list_quiz_subjects():
@@ -61,29 +76,28 @@ def list_quiz_chapters(subject_id):
     # Note: We don't disable a chapter here.
     return render_template('users/quiz_chapters.html', subject=subject, chapters=chapters)
 
-# 3. For a selected chapter, list all quizzes.
 @user_bp.route('/user_quizzes/<subject_id>/<int:chapter_id>/quizzes')
 def list_quizzes_for_chapter(subject_id, chapter_id):
     if 'username' not in session:
         flash("Please log in to attempt a quiz", "warning")
         return redirect(url_for('auth.login'))
     
-    # Retrieve all quizzes for the chapter.
+    today = date.today()
     quizzes = Quiz.query.filter_by(chapter_id=chapter_id).all()
     if not quizzes:
         flash("No quizzes available in this chapter.", "warning")
         return redirect(url_for('user.list_quiz_chapters', subject_id=subject_id))
     
-    # Retrieve attempted quizzes for the user.
     user_id = session.get('user_id')
     attempted_responses = UserResponse.query.filter_by(user_id=user_id).all()
     attempted_quizzes = {response.quiz_code for response in attempted_responses}
     
     return render_template('users/list_quizzes.html', 
-                           subject_id=subject_id, 
-                           chapter_id=chapter_id, 
-                           quizzes=quizzes, 
-                           attempted_quizzes=attempted_quizzes)
+                       subject_id=subject_id, 
+                       chapter_id=chapter_id, 
+                       quizzes=quizzes, 
+                       attempted_quizzes=attempted_quizzes,
+                       today=today)
 
 # 4. For a selected quiz, display the quiz questions.
 @user_bp.route('/user_quizzes/<subject_id>/<int:chapter_id>/<quiz_code>')
@@ -92,12 +106,20 @@ def attempt_quiz(subject_id, chapter_id, quiz_code):
         flash("Please log in to attempt a quiz", "warning")
         return redirect(url_for('auth.login'))
     
+    today = date.today()
     quiz = Quiz.query.filter_by(code=quiz_code).first()
     if not quiz:
         flash("Quiz not found", "danger")
         return redirect(url_for('user.list_quizzes_for_chapter', subject_id=subject_id, chapter_id=chapter_id))
     
-    # Check if the user has already attempted this quiz.
+    # Restrict quiz attempts based on scheduled date.
+    if quiz.date_of_quiz != today:
+        if quiz.date_of_quiz > today:
+            flash(f"This quiz is upcoming and will be live on {quiz.date_of_quiz.strftime('%Y-%m-%d')}.", "warning")
+        else:
+            flash("The quiz time has passed.", "warning")
+        return redirect(url_for('user.list_quizzes_for_chapter', subject_id=subject_id, chapter_id=chapter_id))
+    
     user_id = session.get('user_id')
     existing_response = UserResponse.query.filter_by(user_id=user_id, quiz_code=quiz.code).first()
     if existing_response:
@@ -106,7 +128,6 @@ def attempt_quiz(subject_id, chapter_id, quiz_code):
     
     questions = Question.query.filter_by(quiz_id=quiz.code).all()
     return render_template('users/attempt_quiz.html', quiz=quiz, questions=questions)
-
 @user_bp.route('/submit_quiz/<quiz_code>', methods=['POST'])
 def submit_quiz(quiz_code):
     if 'username' not in session or 'user_id' not in session:
@@ -126,7 +147,6 @@ def submit_quiz(quiz_code):
         return redirect(url_for('user.user_dashboard'))
     
     questions = Question.query.filter_by(quiz_id=quiz.code).all()
-    
     correct_count = 0
     for question in questions:
         user_answer = request.form.get(f"q{question.id}")
@@ -170,11 +190,14 @@ def view_scores():
      .group_by(UserResponse.subject_id).all()
     
     chapter_results = db.session.query(
-        UserResponse.chapter_id,
+        Chapter.name.label('chapter_name'),
+        Subject.name.label('subject_name'),
         func.sum(UserResponse.score).label('total_score'),
         func.sum(UserResponse.total_questions).label('total_questions')
-    ).filter(UserResponse.user_id == user_id)\
-     .group_by(UserResponse.chapter_id).all()
+    ).join(Chapter, Chapter.id == UserResponse.chapter_id)\
+     .join(Subject, Subject.id == Chapter.subject_id)\
+     .filter(UserResponse.user_id == user_id)\
+     .group_by(Chapter.name, Subject.name).all()
     
     quiz_results = db.session.query(
         UserResponse.quiz_code,

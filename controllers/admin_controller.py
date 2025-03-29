@@ -10,6 +10,7 @@ from models.database import db
 from sqlalchemy import func
 from models.user_response import UserResponse
 import random
+from datetime import date, datetime
 
 admin_bp = Blueprint('admin', __name__)
 
@@ -153,7 +154,7 @@ def add_quiz():
     if 'username' not in session or session.get('username') != 'admin':
         return redirect(url_for('auth.login'))
     
-    # Get all subjects for the dropdown
+    # Get all subjects for the dropdown.
     subjects = Subject.query.all()
     
     if request.method == 'POST':
@@ -164,22 +165,37 @@ def add_quiz():
         time_duration = request.form.get('time_duration')
         remarks = request.form.get('remarks')
         
-        # Convert date string to a Python date object
+        # Convert date string to a Python date object.
         if date_of_quiz_str:
             try:
                 date_of_quiz = datetime.strptime(date_of_quiz_str, "%Y-%m-%d").date()
             except ValueError:
                 flash("Invalid date format. Please use YYYY-MM-DD.", "danger")
                 return redirect(url_for('admin.add_quiz'))
+            # Ensure the quiz date is not in the past.
+            today = date.today()
+            if date_of_quiz < today:
+                flash("Date of quiz cannot be in the past.", "danger")
+                return redirect(url_for('admin.add_quiz'))
         else:
             date_of_quiz = None
         
-        # Generate a unique quiz code
+        # Validate time_duration: it should be a positive integer (in seconds).
+        try:
+            time_duration = int(time_duration)
+            if time_duration <= 0:
+                flash("Time duration must be a positive number of seconds.", "danger")
+                return redirect(url_for('admin.add_quiz'))
+        except (ValueError, TypeError):
+            flash("Invalid time duration. Please enter the time in seconds.", "danger")
+            return redirect(url_for('admin.add_quiz'))
+        
+        # Generate a unique quiz code.
         quiz_code = generate_quiz_code()
         new_quiz = Quiz(
             code=quiz_code,
             name=quiz_name,
-            chapter_id=chapter_id,  # Associate quiz with a chapter
+            chapter_id=chapter_id,  # Associate quiz with a chapter.
             date_of_quiz=date_of_quiz,
             time_duration=time_duration,
             remarks=remarks
@@ -189,10 +205,9 @@ def add_quiz():
         
         flash(f'Quiz "{quiz_name}" added successfully. Quiz Code: {quiz_code}', 'success')
         
-        # Redirect to the question creation page for this quiz
+        # Redirect to the question creation page for this quiz.
         return redirect(url_for('question.add_question', quiz_code=quiz_code))
     
-    # Render the quiz creation template with the list of subjects.
     return render_template('quizzes/add.html', subjects=subjects)
 
 @admin_bp.route('/quizzes')

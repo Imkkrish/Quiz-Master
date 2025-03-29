@@ -55,6 +55,9 @@
       font-weight: bold;
       font-size: 1.2rem;
     }
+    .quiz-details {
+      font-size: 0.9rem;
+    }
   </style>
 </head>
 <body>
@@ -102,7 +105,7 @@
       <main class="col-md-9 ms-sm-auto col-lg-9 px-4">
         <div class="dashboard-header mt-4">
           <h2>Welcome, {{ session['username'] }}!</h2>
-          <p class="text-muted">Overview of your performance.</p>
+          <p class="text-muted">Overview of your performance and available quizzes.</p>
         </div>
         <div class="row mb-4">
           <div class="col-md-6 mb-3">
@@ -122,6 +125,65 @@
             </div>
           </div>
         </div>
+
+        <!-- Live Quizzes Section -->
+        <div class="mb-4">
+          <h3>Live Quizzes (Today: {{ today.strftime('%Y-%m-%d') }})</h3>
+          {% if live_quizzes %}
+          <div class="row">
+            {% for quiz in live_quizzes %}
+            <div class="col-md-4 col-12 mb-3">
+              <div class="card">
+                <div class="card-body">
+                  <h5 class="card-title">{{ quiz.name }}</h5>
+                  <p class="quiz-details">
+                    <strong>Code:</strong> {{ quiz.code }}<br>
+                    <strong>Subject:</strong> {{ quiz.chapter.subject.name }}<br>
+                    <strong>Chapter:</strong> {{ quiz.chapter.name }}<br>
+                    <strong>Time Duration:</strong> {{ quiz.time_duration }} seconds
+                  </p>
+                  {% if quiz.code in attempted_quizzes %}
+                    <button class="btn btn-secondary" disabled>Already Attempted</button>
+                  {% else %}
+                    <a href="{{ url_for('user.attempt_quiz', subject_id=quiz.chapter.subject.id, chapter_id=quiz.chapter_id, quiz_code=quiz.code) }}" class="btn btn-primary">Attempt Quiz</a>
+                  {% endif %}
+                </div>
+              </div>
+            </div>
+            {% endfor %}
+          </div>
+          {% else %}
+            <p>No live quizzes available today.</p>
+          {% endif %}
+        </div>
+
+        <!-- Upcoming Quizzes Section -->
+        <div class="mb-4">
+          <h3>Upcoming Quizzes</h3>
+          {% if upcoming_quizzes %}
+          <div class="row">
+            {% for quiz in upcoming_quizzes %}
+            <div class="col-md-4 col-12 mb-3">
+              <div class="card">
+                <div class="card-body">
+                  <h5 class="card-title">{{ quiz.name }}</h5>
+                  <p class="quiz-details">
+                    <strong>Code:</strong> {{ quiz.code }}<br>
+                    <strong>Subject:</strong> {{ quiz.chapter.subject.name }}<br>
+                    <strong>Chapter:</strong> {{ quiz.chapter.name }}<br>
+                    <strong>Scheduled for:</strong> {{ quiz.date_of_quiz.strftime('%Y-%m-%d') }}
+                  </p>
+                  <button class="btn btn-secondary" disabled>Upcoming</button>
+                </div>
+              </div>
+            </div>
+            {% endfor %}
+          </div>
+          {% else %}
+            <p>No upcoming quizzes.</p>
+          {% endif %}
+        </div>
+        
         <div class="d-flex justify-content-center mb-4">
           <a href="/view_scores" class="btn btn-outline-info me-2">View Detailed Scores</a>
           <a href="{{ url_for('user.list_quiz_subjects') }}" class="btn btn-outline-primary">Attempt New Quiz</a>

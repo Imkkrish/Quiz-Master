@@ -35,12 +35,22 @@
       font-size: 0.9rem;
       margin-bottom: 5px;
     }
+    /* Timer styling */
+    #timer {
+      font-size: 1.5rem;
+      font-weight: bold;
+      color: #dc3545;
+      margin-bottom: 20px;
+    }
   </style>
 </head>
 <body>
   <div class="container mt-5">
     <h2 class="mb-4">Quiz: {{ quiz.name }}</h2>
     <p class="mb-4"><strong>Remarks:</strong> {{ quiz.remarks }}</p>
+    
+    <!-- Timer Display -->
+    <div id="timer">Time Remaining: <span id="time"></span></div>
     
     <!-- Progress Bar -->
     <div class="progress-container">
@@ -59,7 +69,11 @@
         {% set options = question.get_options() %}
         {% for opt in options %}
           {% set opt_label = loop.index0 %}  
-          {% if opt_label == 0 %}{% set label_text = "A" %}{% elif opt_label == 1 %}{% set label_text = "B" %}{% elif opt_label == 2 %}{% set label_text = "C" %}{% elif opt_label == 3 %}{% set label_text = "D" %}{% else %}{% set label_text = "Option " ~ loop.index %}{% endif %}  
+          {% if opt_label == 0 %}{% set label_text = "A" %}
+          {% elif opt_label == 1 %}{% set label_text = "B" %}
+          {% elif opt_label == 2 %}{% set label_text = "C" %}
+          {% elif opt_label == 3 %}{% set label_text = "D" %}
+          {% else %}{% set label_text = "Option " ~ loop.index %}{% endif %}  
           <div class="form-check">
             <input class="form-check-input answer-option" type="radio" name="q{{ question.id }}" 
                    id="q{{ question.id }}_{{ label_text }}" value="{{ opt }}" required>
@@ -78,6 +92,29 @@
   
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
   <script>
+    // Timer logic: duration is set from the backend (quiz.time_duration is assumed to be in seconds)
+    let duration = {{ quiz.time_duration }};
+    const timerElement = document.getElementById('time');
+    const quizForm = document.getElementById('quizForm');
+    
+    function startTimer(duration, display) {
+      let timer = duration;
+      const interval = setInterval(function () {
+        display.textContent = timer + " seconds";
+    
+        if (--timer < 0) {
+          clearInterval(interval);
+          display.textContent = "Time's up!";
+          // Auto-submit the form when timer expires
+          quizForm.submit();
+        }
+      }, 1000);
+    }
+    
+    window.onload = function () {
+      startTimer(duration, timerElement);
+    };
+
     // Update the progress bar as users answer questions.
     const totalQuestions = {{ questions|length }};
     const progressBar = document.getElementById('progressBar');
@@ -85,12 +122,9 @@
     const answerOptions = document.querySelectorAll('.answer-option');
     
     function updateProgress() {
-      // Get all question blocks
       const questionBlocks = document.querySelectorAll('.question-block');
       let answeredCount = 0;
       questionBlocks.forEach(block => {
-        const questionId = block.getAttribute('data-question-index');
-        // Check if an answer is selected in this block
         const selected = block.querySelector('input[type="radio"]:checked');
         if (selected) {
           answeredCount++;
@@ -102,7 +136,6 @@
       progressText.innerText = answeredCount + ' out of ' + totalQuestions + ' answered';
     }
     
-    // Attach event listeners to all answer options
     answerOptions.forEach(option => {
       option.addEventListener('change', updateProgress);
     });
