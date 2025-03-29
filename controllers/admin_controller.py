@@ -311,6 +311,7 @@ def search():
     subjects = Subject.query.filter(Subject.name.ilike(f"%{query}%")).all()
     quizzes = Quiz.query.filter(Quiz.name.ilike(f"%{query}%")).all()
     return render_template('search_results.html', query=query, users=users, subjects=subjects, quizzes=quizzes)
+
 @admin_bp.route('/scorecard')
 def scorecard():
     if 'username' not in session or session.get('username') != 'admin':
@@ -346,22 +347,39 @@ def scorecard():
         func.count(UserResponse.quiz_code).label('quizzes_attempted')
     ).join(UserResponse, User.id == UserResponse.user_id).group_by(User.username).all()
 
-    # Find total users
-    total_users = len(user_stats)
+    # Convert each SQLAlchemy row into a mutable dictionary and compute accuracy
+    user_stats_data = []
+    for user in user_stats:
+        total_score = user.total_score or 0
+        total_questions = user.total_questions or 0
+        accuracy = (total_score / total_questions * 100) if total_questions > 0 else 0
+        user_stats_data.append({
+            'username': user.username,
+            'total_score': total_score,
+            'total_questions': total_questions,
+            'quizzes_attempted': user.quizzes_attempted,
+            'accuracy': accuracy
+        })
 
-    # Calculate average accuracy
-    total_correct = sum(user.total_score for user in user_stats if user.total_score is not None)
-    total_questions = sum(user.total_questions for user in user_stats if user.total_questions is not None)
+    # Sort user_stats by accuracy in descending order
+    user_stats_data = sorted(user_stats_data, key=lambda u: u['accuracy'], reverse=True)
+
+    # Find total users
+    total_users = len(user_stats_data)
+
+    # Calculate overall average accuracy
+    total_correct = sum(u['total_score'] for u in user_stats_data)
+    total_questions = sum(u['total_questions'] for u in user_stats_data)
     average_accuracy = (total_correct / total_questions * 100) if total_questions > 0 else 0
 
-    # Find top performer
-    top_performer = max(user_stats, key=lambda u: u.total_score, default=None)
+    # Top performer based on accuracy is now the first entry in the sorted list
+    top_performer = user_stats_data[0] if user_stats_data else None
 
     return render_template('scorecard.html',
                            subject_stats=subject_stats,
                            chapter_stats=chapter_stats,
                            quiz_results=quiz_results,
-                           user_stats=user_stats,
+                           user_stats=user_stats_data,
                            total_users=total_users,
                            average_accuracy=round(average_accuracy, 2),
                            top_performer=top_performer)
