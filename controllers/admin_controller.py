@@ -24,10 +24,10 @@ def generate_quiz_code():
 # --- Admin Dashboard and Summary Charts ---
 @admin_bp.route('/dashboard')
 def dashboard():
-    if 'username' not in session or session.get('username') != 'admin':
+    if 'username' not in session or session.get('username') != 'ghanshyam@admin.org':
         return redirect(url_for('auth.login'))
     # Example summary data; replace with real chart data as needed.
-    total_users = User.query.filter(User.username != 'admin').count()
+    total_users = User.query.filter(User.username != 'ghanshyam@admin.org').count()
     total_subjects = Subject.query.count()
     total_chapters = Chapter.query.count()
     total_quizzes = Quiz.query.count()
@@ -40,14 +40,14 @@ def dashboard():
 # --- Subject Management ---
 @admin_bp.route('/subjects')
 def list_subjects():
-    if 'username' not in session or session.get('username') != 'admin':
+    if 'username' not in session or session.get('username') != 'ghanshyam@admin.org':
         return redirect(url_for('auth.login'))
     subjects = Subject.query.all()
     return render_template('subjects/list.html', subjects=subjects)
 
 @admin_bp.route('/subjects/<subject_id>/chapters')
 def subject_chapters(subject_id):
-    if 'username' not in session or session.get('username') != 'admin':
+    if 'username' not in session or session.get('username') != 'ghanshyam@admin.org':
         return redirect(url_for('auth.login'))
     # Get the subject (or return a 404 if not found)
     subject = Subject.query.get_or_404(subject_id)
@@ -57,7 +57,7 @@ def subject_chapters(subject_id):
 
 @admin_bp.route('/subjects/add', methods=['GET', 'POST'])
 def add_subject():
-    if 'username' not in session or session.get('username') != 'admin':
+    if 'username' not in session or session.get('username') != 'ghanshyam@admin.org':
         return redirect(url_for('auth.login'))
     if request.method == 'POST':
         subject_id = request.form.get('subject_id')
@@ -73,7 +73,7 @@ def add_subject():
 
 @admin_bp.route('/subjects/edit/<subject_id>', methods=['GET', 'POST'])
 def edit_subject(subject_id):
-    if 'username' not in session or session.get('username') != 'admin':
+    if 'username' not in session or session.get('username') != 'ghanshyam@admin.org':
         return redirect(url_for('auth.login'))
     subject = Subject.query.get_or_404(subject_id)
     if request.method == 'POST':
@@ -86,7 +86,7 @@ def edit_subject(subject_id):
 
 @admin_bp.route('/subjects/delete/<subject_id>')
 def delete_subject(subject_id):
-    if 'username' not in session or session.get('username') != 'admin':
+    if 'username' not in session or session.get('username') != 'ghanshyam@admin.org':
         return redirect(url_for('auth.login'))
     subject = Subject.query.get_or_404(subject_id)
     db.session.delete(subject)
@@ -97,14 +97,14 @@ def delete_subject(subject_id):
 # --- Chapter Management ---
 @admin_bp.route('/chapters')
 def list_chapters():
-    if 'username' not in session or session.get('username') != 'admin':
+    if 'username' not in session or session.get('username') != 'ghanshyam@admin.org':
         return redirect(url_for('auth.login'))
     chapters = Chapter.query.all()
     return render_template('chapters/list.html', chapters=chapters)
 
 @admin_bp.route('/chapters/add', methods=['GET', 'POST'])
 def add_chapter():
-    if 'username' not in session or session.get('username') != 'admin':
+    if 'username' not in session or session.get('username') != 'ghanshyam@admin.org':
         return redirect(url_for('auth.login'))
     if request.method == 'POST':
         name = request.form.get('name')
@@ -126,7 +126,7 @@ def get_chapters(subject_id):
 
 @admin_bp.route('/chapters/edit/<int:chapter_id>', methods=['GET', 'POST'])
 def edit_chapter(chapter_id):
-    if 'username' not in session or session.get('username') != 'admin':
+    if 'username' not in session or session.get('username') != 'ghanshyam@admin.org':
         return redirect(url_for('auth.login'))
     chapter = Chapter.query.get_or_404(chapter_id)
     if request.method == 'POST':
@@ -140,7 +140,7 @@ def edit_chapter(chapter_id):
 
 @admin_bp.route('/chapters/delete/<int:chapter_id>')
 def delete_chapter(chapter_id):
-    if 'username' not in session or session.get('username') != 'admin':
+    if 'username' not in session or session.get('username') != 'ghanshyam@admin.org':
         return redirect(url_for('auth.login'))
     chapter = Chapter.query.get_or_404(chapter_id)
     db.session.delete(chapter)
@@ -151,7 +151,7 @@ def delete_chapter(chapter_id):
 # --- Quiz Management under a Chapter ---
 @admin_bp.route('/quizzes/add', methods=['GET', 'POST'])
 def add_quiz():
-    if 'username' not in session or session.get('username') != 'admin':
+    if 'username' not in session or session.get('username') != 'ghanshyam@admin.org':
         return redirect(url_for('auth.login'))
     
     # Get all subjects for the dropdown.
@@ -212,14 +212,14 @@ def add_quiz():
 
 @admin_bp.route('/quizzes')
 def list_quizzes():
-    if 'username' not in session or session.get('username') != 'admin':
+    if 'username' not in session or session.get('username') != 'ghanshyam@admin.org':
         return redirect(url_for('auth.login'))
     quizzes = Quiz.query.all()
     return render_template('quizzes/list.html', quizzes=quizzes)
 
 @admin_bp.route('/quizzes/edit/<string:quiz_code>', methods=['GET', 'POST'])
 def edit_quiz(quiz_code):
-    if 'username' not in session or session.get('username') != 'admin':
+    if 'username' not in session or session.get('username') != 'ghanshyam@admin.org':
         return redirect(url_for('auth.login'))
     quiz = Quiz.query.get_or_404(quiz_code)
     
@@ -249,7 +249,7 @@ def edit_quiz(quiz_code):
 
 @admin_bp.route('/quizzes/delete/<string:quiz_code>')
 def delete_quiz(quiz_code):
-    if 'username' not in session or session.get('username') != 'admin':
+    if 'username' not in session or session.get('username') != 'ghanshyam@admin.org':
         return redirect(url_for('auth.login'))
     quiz = Quiz.query.get_or_404(quiz_code)
     for question in quiz.questions:
@@ -261,18 +261,18 @@ def delete_quiz(quiz_code):
 
 @admin_bp.route('/manage_users')
 def manage_users():
-    if 'username' not in session or session.get('username') != 'admin':
+    if 'username' not in session or session.get('username') != 'ghanshyam@admin.org':
         return redirect(url_for('auth.login'))
     # Retrieve all users from the database.
     users = User.query.all()
     return render_template('users/manage_users.html', users=users)
 @admin_bp.route('/users/block/<int:user_id>', methods=['POST'])
 def block_user(user_id):
-    if 'username' not in session or session.get('username') != 'admin':
+    if 'username' not in session or session.get('username') != 'ghanshyam@admin.org':
         return redirect(url_for('auth.login'))
     user = User.query.get_or_404(user_id)
     # Prevent blocking the admin account
-    if user.username == 'admin':
+    if user.username == 'ghanshyam@admin.org':
         flash("Cannot block the admin.", "danger")
         return redirect(url_for('admin.manage_users'))
     user.is_active = False
@@ -282,7 +282,7 @@ def block_user(user_id):
 
 @admin_bp.route('/users/activate/<int:user_id>', methods=['POST'])
 def activate_user(user_id):
-    if 'username' not in session or session.get('username') != 'admin':
+    if 'username' not in session or session.get('username') != 'ghanshyam@admin.org':
         return redirect(url_for('auth.login'))
     user = User.query.get_or_404(user_id)
     user.is_active = True
@@ -292,7 +292,7 @@ def activate_user(user_id):
 
 @admin_bp.route('/users/edit/<int:user_id>', methods=['GET', 'POST'])
 def edit_user(user_id):
-    if 'username' not in session or session.get('username') != 'admin':
+    if 'username' not in session or session.get('username') != 'ghanshyam@admin.org':
         return redirect(url_for('auth.login'))
     user = User.query.get_or_404(user_id)
     if request.method == 'POST':
@@ -307,7 +307,7 @@ def edit_user(user_id):
 
 @admin_bp.route('/users/delete/<int:user_id>', methods=['POST'])
 def delete_user(user_id):
-    if 'username' not in session or session.get('username') != 'admin':
+    if 'username' not in session or session.get('username') != 'ghanshyam@admin.org':
         return redirect(url_for('auth.login'))
     user = User.query.get_or_404(user_id)
     db.session.delete(user)
@@ -318,7 +318,7 @@ def delete_user(user_id):
 # --- Search Functionality ---
 @admin_bp.route('/search', methods=['GET'])
 def search():
-    if 'username' not in session or session.get('username') != 'admin':
+    if 'username' not in session or session.get('username') != 'ghanshyam@admin.org':
         return redirect(url_for('auth.login'))
     query = request.args.get('q', '')
     # Example search: search in users, subjects, and quizzes
@@ -329,7 +329,7 @@ def search():
 
 @admin_bp.route('/scorecard')
 def scorecard():
-    if 'username' not in session or session.get('username') != 'admin':
+    if 'username' not in session or session.get('username') != 'ghanshyam@admin.org':
         flash("Not authorized", "warning")
         return redirect(url_for('auth.login'))
     

@@ -6,6 +6,7 @@ from controllers.auth_controller import auth_bp
 from controllers.question_controller import question_bp
 from controllers.admin_controller import admin_bp
 from controllers.user_controller import user_bp
+from controllers.api_controller import api_bp
 from dotenv import load_dotenv  
 
 
@@ -26,9 +27,9 @@ with app.app_context():
 
     from models.user import User
     
-    admin = User.query.filter_by(username='admin').first()
+    admin = User.query.filter_by(username='ghanshyam@admin.org').first()
     if not admin:
-        admin = User(username='admin', full_name='Admin', qualification='Admin', dob='2000-01-01')
+        admin = User(username='ghanshyam@admin.org', full_name='Admin', qualification='Admin', dob='2000-01-01')
         admin.set_password('admin123')
         db.session.add(admin)
         db.session.commit()
@@ -38,6 +39,7 @@ app.register_blueprint(auth_bp)
 app.register_blueprint(question_bp)
 app.register_blueprint(admin_bp)
 app.register_blueprint(user_bp)
+app.register_blueprint(api_bp)
 
 @app.route('/')
 def home():

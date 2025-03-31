@@ -7,16 +7,13 @@ question_bp = Blueprint('question', __name__)
 
 @question_bp.route('/questions/add/<string:quiz_code>', methods=['GET', 'POST'])
 def add_question(quiz_code):
-    # Allow only admin to add questions
-    if 'username' not in session or session.get('username') != 'admin':
+
+    if 'username' not in session or session.get('username') != 'ghanshyam@admin.org':
         return redirect(url_for('auth.login'))
     
-    # Get the quiz to which the question will be added.
     quiz = Quiz.query.get_or_404(quiz_code)
     
     if request.method == 'POST':
-        # Retrieve the question details from the form.
-        # (Assuming your form names correspond to these fields.)
         question_statement = request.form.get('question_1')
         option_a = request.form.get('option_1_a')
         option_b = request.form.get('option_1_b')
@@ -49,7 +46,7 @@ def add_question(quiz_code):
 @question_bp.route('/questions/list/<string:quiz_code>', methods=['GET'])
 def list_questions(quiz_code):
     # Ensure admin access.
-    if 'username' not in session or session.get('username') != 'admin':
+    if 'username' not in session or session.get('username') != 'ghanshyam@admin.org':
         return redirect(url_for('auth.login'))
     
     quiz = Quiz.query.get_or_404(quiz_code)
@@ -60,7 +57,7 @@ def list_questions(quiz_code):
 @question_bp.route('/questions/edit/<int:question_id>', methods=['GET', 'POST'])
 def edit_question(question_id):
     # Ensure admin access.
-    if 'username' not in session or session.get('username') != 'admin':
+    if 'username' not in session or session.get('username') != 'ghanshyam@admin.org':
         return redirect(url_for('auth.login'))
     
     question = Question.query.get_or_404(question_id)
@@ -89,7 +86,7 @@ def edit_question(question_id):
 @question_bp.route('/questions/delete/<int:question_id>', methods=['POST'])
 def delete_question(question_id):
     # Ensure admin access.
-    if 'username' not in session or session.get('username') != 'admin':
+    if 'username' not in session or session.get('username') != 'ghanshyam@admin.org':
         return redirect(url_for('auth.login'))
     
     question = Question.query.get_or_404(question_id)
